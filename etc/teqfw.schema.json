@@ -1,0 +1,61 @@
+{
+  "version": 2,
+  "requires": [],
+  "package": {},
+  "refs": {},
+  "entity": {
+    "case": {
+      "comment": "Persistent Context unit for one distinct ongoing matter.",
+      "attr": {
+        "id": {
+          "type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}},
+          "generation": {"kind": "core.identity", "params": {"mode": "byDefault"}}
+        },
+        "code": {"type": {"id": "core.string", "params": {"length": 128}}},
+        "title": {"type": {"id": "core.string", "params": {"length": 255}}},
+        "description": {"nullable": true, "type": {"id": "core.text", "params": {}}},
+        "parent_id": {"nullable": true, "type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}}
+      },
+      "index": {
+        "id_unique": {"kind": "unique", "keys": [{"attr": "id"}], "include": [], "options": {}, "phase": "table"},
+        "code_unique": {"kind": "unique", "keys": [{"attr": "code"}], "include": [], "options": {}, "phase": "table"},
+        "parent_lookup": {"kind": "index", "method": "core.btree", "keys": [{"attr": "parent_id"}], "include": [], "options": {}, "phase": "afterRelations"}
+      },
+      "relation": {
+        "parent": {
+          "attrs": ["parent_id"],
+          "ref": {"path": "/case", "attrs": ["id"]},
+          "action": {"delete": "restrict", "update": "cascade"},
+          "deferrable": "notDeferrable"
+        }
+      }
+    },
+    "case_relation": {
+      "comment": "Directed named semantic relation between two Cases.",
+      "attr": {
+        "source_case_id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}},
+        "target_case_id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}},
+        "relation": {"type": {"id": "core.string", "params": {"length": 64}}}
+      },
+      "index": {
+        "pk": {"kind": "primary", "keys": [{"attr": "source_case_id"}, {"attr": "target_case_id"}, {"attr": "relation"}], "include": [], "options": {}, "phase": "table"},
+        "target_lookup": {"kind": "index", "method": "core.btree", "keys": [{"attr": "target_case_id"}], "include": [], "options": {}, "phase": "afterRelations"}
+      },
+      "relation": {
+        "source_case": {
+          "attrs": ["source_case_id"],
+          "ref": {"path": "/case", "attrs": ["id"]},
+          "action": {"delete": "restrict", "update": "cascade"},
+          "deferrable": "notDeferrable"
+        },
+        "target_case": {
+          "attrs": ["target_case_id"],
+          "ref": {"path": "/case", "attrs": ["id"]},
+          "action": {"delete": "restrict", "update": "cascade"},
+          "deferrable": "notDeferrable"
+        }
+      }
+    }
+  }
+}
+

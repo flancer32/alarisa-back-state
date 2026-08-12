@@ -1,0 +1,54 @@
+{
+  "name": "@flancer32/alarisa-back-state",
+  "version": "0.1.0",
+  "description": "Durable Principal state and Case-centered Activity persistence for Alarisa.",
+  "type": "module",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/flancer32/alarisa-back-state.git"
+  },
+  "homepage": "https://github.com/flancer32/alarisa-back-state",
+  "bugs": {
+    "url": "https://github.com/flancer32/alarisa-back-state/issues"
+  },
+  "types": "types.d.ts",
+  "files": [
+    "etc/",
+    "src/",
+    "types.d.ts",
+    "CHANGELOG.md",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20.17.0"
+  },
+  "teqfw": {
+    "fw": {
+      "di": {
+        "namespaces": [
+          {
+            "prefix": "Alarisa_Back_State_",
+            "path": "./src",
+            "ext": ".mjs"
+          }
+        ]
+      }
+    }
+  },
+  "scripts": {
+    "test:unit": "node --test test/unit/*.test.mjs",
+    "test:integration": "node --test test/integration/*.test.mjs",
+    "test": "npm run test:unit && npm run test:integration",
+    "typecheck": "tsc -p jsconfig.json"
+  },
+  "dependencies": {
+    "@teqfw/db": "^2.1.1",
+    "@teqfw/di": "^2.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "sqlite3": "^6.0.1",
+    "typescript": "^5.9.3"
+  }
+}
