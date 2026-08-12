@@ -1,21 +1,27 @@
 // @ts-check
 
-/** @namespace Alarisa_Back_State_Case_Repository */
+/**
+ * @namespace Alarisa_Back_State_Case_Repository
+ * @description Transactional access to Case components and their controlled semantic Relations.
+ */
 export default class Alarisa_Back_State_Case_Repository {
     /**
      * @param {object} deps
      * @param {TeqFw_Db_Back_App_Crud} deps.crud
      * @param {TeqFw_Db_Back_RDb_IConnect} deps.connection
+     * @param {Alarisa_Back_State_Object_Schema$} deps.objectSchema
      * @param {Alarisa_Back_State_Case_Schema$} deps.caseSchema
-     * @param {Alarisa_Back_State_Case_Relation_Schema$} deps.relationSchema
+     * @param {Alarisa_Back_State_Relation_Type_Schema$} deps.relationTypeSchema
+     * @param {Alarisa_Back_State_Relation_Schema$} deps.relationSchema
      */
-    constructor({crud, connection, caseSchema, relationSchema}) {
+    constructor({crud, connection, objectSchema, caseSchema, relationTypeSchema, relationSchema}) {
         const CODE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+        const PARENT = 'case-parent';
 
-        /** @param {string} code */
-        function assertCode(code) {
+        /** @param {string} code @param {string} label */
+        function assertCode(code, label = 'Code') {
             if (typeof code !== 'string' || code.length > 128 || !CODE.test(code)) {
-                throw new TypeError('Case code must be a lowercase kebab-case string up to 128 characters.');
+                throw new TypeError(`${label} must be a lowercase kebab-case string up to 128 characters.`);
             }
         }
 
@@ -28,7 +34,8 @@ export default class Alarisa_Back_State_Case_Repository {
 
         /**
          * @param {TeqFw_Db_Back_RDb_ITrans|undefined} outer
-         * @param {(trx: TeqFw_Db_Back_RDb_ITrans) => Promise<any>} operation
+         * @param {Function} operation
+         * @returns {Promise<any>}
          */
         async function transact(outer, operation) {
             const trx = outer ?? await connection.startTransaction();
@@ -42,46 +49,112 @@ export default class Alarisa_Back_State_Case_Repository {
             }
         }
 
-        /** @param {number|string} id @param {TeqFw_Db_Back_RDb_ITrans} trx */
+        /** @param {string} code @param {TeqFw_Db_Back_RDb_ITrans} trx @returns {Promise<object|null>} */
+        async function findRelationType(code, trx) {
+            const {records} = await crud.readMany({
+                schema: relationTypeSchema, trx, conditions: {code}, pagination: {limit: 1},
+            });
+            return records[0] ?? null;
+        }
+
+        /** @param {TeqFw_Db_Back_RDb_ITrans} trx @returns {Promise<object>} */
+        async function ensureParentType(trx) {
+            const existing = await findRelationType(PARENT, trx);
+            if (existing) return existing;
+            const {primaryKey} = await crud.createOne({
+                schema: relationTypeSchema,
+                trx,
+                dto: {
+                    code: PARENT,
+                    description: 'A Case has the target Case as its single primary parent.',
+                    constraints: {sourceComponents: ['case'], targetComponents: ['case'], sourceCardinality: 'zero-or-one'},
+                },
+            });
+            return {id: primaryKey.id, code: PARENT};
+        }
+
+        /** @param {number|string} id @param {TeqFw_Db_Back_RDb_ITrans} trx @returns {Promise<object>} */
         async function requireCase(id, trx) {
-            const {record} = await crud.readOne({schema: caseSchema, trx, key: {id}});
+            const {record} = await crud.readOne({schema: caseSchema, trx, key: {object_id: id}});
             if (!record) throw new Error(`Case '${id}' does not exist.`);
             return record;
         }
 
-        /** @param {{code: string, title: string, description?: string|null, parentId?: number|string|null, trx?: TeqFw_Db_Back_RDb_ITrans}} input */
+        /** @param {number|string} id @param {number|string} typeId @param {TeqFw_Db_Back_RDb_ITrans} trx @returns {Promise<object|null>} */
+        async function findParentRelation(id, typeId, trx) {
+            const {records} = await crud.readMany({
+                schema: relationSchema,
+                trx,
+                conditions: {source_object_id: id, relation_type_id: typeId, archived_at: null},
+                pagination: {limit: 2},
+            });
+            if (records.length > 1) throw new Error(`Case '${id}' has more than one primary parent.`);
+            return records[0] ?? null;
+        }
+
+        /** @param {object} record @param {TeqFw_Db_Back_RDb_ITrans} trx @returns {Promise<object>} */
+        async function withParent(record, trx) {
+            const type = await findRelationType(PARENT, trx);
+            const relation = type ? await findParentRelation(/** @type {number|string} */ (record.object_id), /** @type {number|string} */ (type.id), trx) : null;
+            return {...record, id: record.object_id, parent_id: relation?.target_object_id ?? null};
+        }
+
+        /**
+         * @param {object} input
+         * @returns {Promise<object>}
+         */
         this.create = async function (input) {
             const {code, title, description = null, parentId = null, trx} = input;
-            assertCode(code);
+            assertCode(code, 'Case code');
             assertText(title, 'Case title', 255);
-            if (description !== null && typeof description !== 'string') {
-                throw new TypeError('Case description must be a string or null.');
-            }
+            if (description !== null && typeof description !== 'string') throw new TypeError('Case description must be a string or null.');
             return transact(trx, async (active) => {
                 if (parentId !== null) await requireCase(parentId, active);
-                return crud.createOne({
-                    schema: caseSchema, trx: active,
-                    dto: {code, title, description, parent_id: parentId},
-                });
+                const object = await crud.createOne({schema: objectSchema, trx: active, dto: {}});
+                const id = object.primaryKey.id;
+                await crud.createOne({schema: caseSchema, trx: active, dto: {object_id: id, code, title, description}});
+                if (parentId !== null) {
+                    const type = await ensureParentType(active);
+                    await crud.createOne({
+                        schema: relationSchema, trx: active,
+                        dto: {source_object_id: id, relation_type_id: type.id, target_object_id: parentId},
+                    });
+                }
+                return {primaryKey: {id, object_id: id}};
             });
         };
 
-        /** @param {{id: number|string, trx?: TeqFw_Db_Back_RDb_ITrans}} input */
-        this.readById = async function ({id, trx}) {
-            return transact(trx, (active) => crud.readOne({schema: caseSchema, trx: active, key: {id}}));
+        /**
+         * @param {object} input
+         * @returns {Promise<object>}
+         */
+        this.readById = async function (input) {
+            const {id, trx} = input;
+            return transact(trx, async (active) => {
+                const {record} = await crud.readOne({schema: caseSchema, trx: active, key: {object_id: id}});
+                return {record: record ? await withParent(record, active) : null};
+            });
         };
 
-        /** @param {{code: string, trx?: TeqFw_Db_Back_RDb_ITrans}} input */
-        this.readByCode = async function ({code, trx}) {
-            assertCode(code);
+        /**
+         * @param {object} input
+         * @returns {Promise<object>}
+         */
+        this.readByCode = async function (input) {
+            const {code, trx} = input;
+            assertCode(code, 'Case code');
             return transact(trx, async (active) => {
                 const {records} = await crud.readMany({schema: caseSchema, trx: active, conditions: {code}, pagination: {limit: 1}});
-                return {record: records[0] ?? null};
+                return {record: records[0] ? await withParent(records[0], active) : null};
             });
         };
 
-        /** @param {{id: number|string, title?: string, description?: string|null, trx?: TeqFw_Db_Back_RDb_ITrans}} input */
-        this.updateDetails = async function ({id, title, description, trx}) {
+        /**
+         * @param {object} input
+         * @returns {Promise<object>}
+         */
+        this.updateDetails = async function (input) {
+            const {id, title, description, trx} = input;
             /** @type {Record<string, unknown>} */
             const updates = {};
             if (title !== undefined) {
@@ -89,50 +162,87 @@ export default class Alarisa_Back_State_Case_Repository {
                 updates.title = title;
             }
             if (description !== undefined) {
-                if (description !== null && typeof description !== 'string') {
-                    throw new TypeError('Case description must be a string or null.');
-                }
+                if (description !== null && typeof description !== 'string') throw new TypeError('Case description must be a string or null.');
                 updates.description = description;
             }
             if (Object.keys(updates).length === 0) throw new TypeError('No Case details were provided.');
-            return transact(trx, (active) => crud.updateOne({schema: caseSchema, trx: active, key: {id}, updates}));
+            return transact(trx, (active) => crud.updateOne({schema: caseSchema, trx: active, key: {object_id: id}, updates}));
         };
 
-        /** @param {{id: number|string, parentId: number|string|null, trx?: TeqFw_Db_Back_RDb_ITrans}} input */
-        this.reparent = async function ({id, parentId, trx}) {
-            if (parentId === id) throw new Error('A Case cannot be its own parent.');
+        /**
+         * @param {object} input
+         * @returns {Promise<object>}
+         */
+        this.reparent = async function (input) {
+            const {id, parentId, trx} = input;
+            if (String(parentId) === String(id)) throw new Error('A Case cannot be its own parent.');
             return transact(trx, async (active) => {
                 await requireCase(id, active);
+                const type = await ensureParentType(active);
+                const typeId = /** @type {number|string} */ (type.id);
+                const currentRelation = await findParentRelation(id, typeId, active);
                 if (parentId !== null) {
-                    /** @type {Record<string, unknown>} */
-                    let current = await requireCase(parentId, active);
+                    await requireCase(parentId, active);
+                    let currentId = parentId;
                     const visited = new Set();
-                    while (current) {
-                        const key = String(current.id);
+                    while (currentId !== null) {
+                        const key = String(currentId);
                         if (key === String(id)) throw new Error('Case reparenting would create a primary-parent cycle.');
                         if (visited.has(key)) throw new Error('The stored Case hierarchy already contains a cycle.');
                         visited.add(key);
-                        if (current.parent_id === null) break;
-                        if (typeof current.parent_id !== 'number' && typeof current.parent_id !== 'string') {
-                            throw new Error('Stored parent identity has an invalid type.');
-                        }
-                        current = await requireCase(current.parent_id, active);
+                        const relation = await findParentRelation(currentId, typeId, active);
+                        currentId = relation ? /** @type {number|string} */ (relation.target_object_id) : null;
                     }
                 }
-                return crud.updateOne({schema: caseSchema, trx: active, key: {id}, updates: {parent_id: parentId}});
+                if (currentRelation) {
+                    const relationId = /** @type {number|string} */ (currentRelation.id);
+                    if (parentId === null) return crud.deleteOne({schema: relationSchema, trx: active, key: {id: relationId}});
+                    return crud.updateOne({
+                        schema: relationSchema, trx: active, key: {id: relationId},
+                        updates: {target_object_id: parentId},
+                    });
+                }
+                if (parentId === null) return {updatedCount: 0};
+                await crud.createOne({
+                    schema: relationSchema, trx: active,
+                    dto: {source_object_id: id, relation_type_id: type.id, target_object_id: parentId},
+                });
+                return {updatedCount: 1};
             });
         };
 
-        /** @param {{sourceCaseId: number|string, targetCaseId: number|string, relation: string, trx?: TeqFw_Db_Back_RDb_ITrans}} input */
-        this.addRelation = async function ({sourceCaseId, targetCaseId, relation, trx}) {
-            assertText(relation, 'Case relation', 64);
-            if (sourceCaseId === targetCaseId) throw new Error('A semantic Case relation must connect distinct Cases.');
-            return transact(trx, async (active) => {
-                await requireCase(sourceCaseId, active);
-                await requireCase(targetCaseId, active);
+        /**
+         * @param {object} input
+         * @returns {Promise<object>}
+         */
+        this.registerRelationType = async function (input) {
+            const {code, description, constraints = null, trx} = input;
+            assertCode(code, 'Relation type code');
+            assertText(description, 'Relation type description', 10000);
+            return transact(trx, (active) => crud.createOne({
+                schema: relationTypeSchema, trx: active, dto: {code, description, constraints},
+            }));
+        };
+
+        /**
+         * @param {object} input
+         * @returns {Promise<object>}
+         */
+        this.addRelation = async function (input) {
+            const sourceId = input.sourceObjectId ?? input.sourceCaseId;
+            const targetId = input.targetObjectId ?? input.targetCaseId;
+            if (sourceId === undefined || targetId === undefined) throw new TypeError('Source and target Object identities are required.');
+            assertCode(input.relation, 'Relation type code');
+            if (String(sourceId) === String(targetId)) throw new Error('A semantic Relation must connect distinct Objects.');
+            return transact(input.trx, async (active) => {
+                const type = await findRelationType(input.relation, active);
+                if (!type || type.archived_at !== null) throw new Error(`Relation type '${input.relation}' is not registered and active.`);
+                const source = await crud.readOne({schema: objectSchema, trx: active, key: {id: sourceId}});
+                const target = await crud.readOne({schema: objectSchema, trx: active, key: {id: targetId}});
+                if (!source.record || !target.record) throw new Error('A semantic Relation must reference existing Objects.');
                 return crud.createOne({
                     schema: relationSchema, trx: active,
-                    dto: {source_case_id: sourceCaseId, target_case_id: targetCaseId, relation},
+                    dto: {source_object_id: sourceId, relation_type_id: type.id, target_object_id: targetId},
                 });
             });
         };
@@ -143,8 +253,9 @@ export const __deps__ = Object.freeze({
     default: Object.freeze({
         crud: 'TeqFw_Db_Back_App_Crud$',
         connection: 'TeqFw_Db_Back_RDb_Connect$',
+        objectSchema: 'Alarisa_Back_State_Object_Schema$',
         caseSchema: 'Alarisa_Back_State_Case_Schema$',
-        relationSchema: 'Alarisa_Back_State_Case_Relation_Schema$',
+        relationTypeSchema: 'Alarisa_Back_State_Relation_Type_Schema$',
+        relationSchema: 'Alarisa_Back_State_Relation_Schema$',
     }),
 });
-
