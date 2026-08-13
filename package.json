@@ -15,6 +15,7 @@
   "types": "types.d.ts",
   "files": [
     "etc/",
+    "skills/",
     "src/",
     "types.d.ts",
     "CHANGELOG.md",
