@@ -6,7 +6,7 @@ import Container from '@teqfw/di';
 const root = process.cwd();
 const env = Object.fromEntries((await fs.readFile(path.join(root, '.env'), 'utf8')).split(/\r?\n/).filter((line) => line && !line.startsWith('#')).map((line) => { const at = line.indexOf('='); return [line.slice(0, at), line.slice(at + 1)]; }));
 const cases = JSON.parse(execFileSync('ruby', ['-ryaml', '-rjson', '-e', 'puts YAML.load_file(ARGV[0]).to_json', '/home/alex/work/flancer32/alarisa/tmp/cases.yaml'], {encoding: 'utf8'})).cases;
-const byCode = new Map(cases.map((item, index) => [item.id, {...item, objectId: index + 1}]));
+const byCode = new Map(cases.map((item) => [item.id, {...item}]));
 const relationCodes = [...new Set(cases.flatMap((item) => (item.links ?? []).map((link) => link.relation)).concat('case-parent'))];
 const oldTables = ['action_data', 'assertion', 'assertion_object_support', 'assertion_relation_support', 'case_data', 'entity_data', 'event_data', 'goal_data', 'interpretation', 'interpretation_observation', 'object', 'object_extension', 'obligation_data', 'observation', 'relation', 'relation_type'];
 
@@ -29,20 +29,23 @@ for (const name of ['PG', 'MARIADB']) {
     compile.assertResult({value: compilation});
     const schema = await builder.exec({adapter, connection, plan: planner.exec({compilation, operation: 'create'})});
     await knex.transaction(async (trx) => {
-        await trx('alarisa_component_type').insert({id: 1, code: 'case', description: 'Central activity Component for one distinct matter.'});
-        await trx('alarisa_property_type').insert([['code', 'string'], ['title', 'string'], ['description', 'text']].map(([code, value_type], id) => ({id: id + 1, code, value_type})));
-        await trx('alarisa_relation_type').insert(relationCodes.map((code, id) => ({id: id + 1, code, description: code === 'case-parent' ? 'Primary Case Map placement.' : null})));
-        await trx('alarisa_object').insert(cases.map((item) => ({id: byCode.get(item.id).objectId})));
-        await trx('alarisa_component').insert(cases.map((item) => ({id: byCode.get(item.id).objectId, object_id: byCode.get(item.id).objectId, type_id: 1})));
-        let propertyId = 1;
-        const properties = [];
-        for (const item of cases) for (const [typeId, key] of ['code', 'title', 'description'].entries()) properties.push({id: propertyId++, component_id: byCode.get(item.id).objectId, type_id: typeId + 1, value: JSON.stringify(item[key] ?? null)});
-        await trx('alarisa_property').insert(properties);
-        const relationId = new Map(relationCodes.map((code, id) => [code, id + 1]));
-        let id = 1;
-        const relations = [];
-        for (const item of cases) { if (item.parent !== null) relations.push({id: id++, source_object_id: byCode.get(item.id).objectId, relation_type_id: relationId.get('case-parent'), target_object_id: byCode.get(item.parent).objectId}); for (const link of item.links ?? []) relations.push({id: id++, source_object_id: byCode.get(item.id).objectId, relation_type_id: relationId.get(link.relation), target_object_id: byCode.get(link.case).objectId}); }
-        await trx('alarisa_relation').insert(relations);
+        const insertOne = async (table, row) => {
+            const query = trx(table).insert(row);
+            const inserted = name === 'PG' ? await query.returning('id') : await query;
+            return name === 'PG' ? inserted[0].id : inserted[0];
+        };
+        const componentTypeId = await insertOne('alarisa_component_type', {code: 'case', description: 'Central activity Component for one distinct matter.'});
+        const propertyTypeId = new Map();
+        for (const [code, value_type] of [['code', 'string'], ['title', 'string'], ['description', 'text']]) propertyTypeId.set(code, await insertOne('alarisa_property_type', {code, value_type}));
+        const relationTypeId = new Map();
+        for (const code of relationCodes) relationTypeId.set(code, await insertOne('alarisa_relation_type', {code, description: code === 'case-parent' ? 'Primary Case Map placement.' : null}));
+        for (const item of cases) byCode.get(item.id).objectId = await insertOne('alarisa_object', {});
+        for (const item of cases) byCode.get(item.id).componentId = await insertOne('alarisa_component', {object_id: byCode.get(item.id).objectId, type_id: componentTypeId});
+        for (const item of cases) for (const key of ['code', 'title', 'description']) await insertOne('alarisa_property', {component_id: byCode.get(item.id).componentId, type_id: propertyTypeId.get(key), value: JSON.stringify(item[key] ?? null)});
+        for (const item of cases) {
+            if (item.parent !== null) await insertOne('alarisa_relation', {source_object_id: byCode.get(item.id).objectId, relation_type_id: relationTypeId.get('case-parent'), target_object_id: byCode.get(item.parent).objectId});
+            for (const link of item.links ?? []) await insertOne('alarisa_relation', {source_object_id: byCode.get(item.id).objectId, relation_type_id: relationTypeId.get(link.relation), target_object_id: byCode.get(link.case).objectId});
+        }
     });
     console.log(JSON.stringify({database: name, schema: schema.status, cases: cases.length, relations: relationCodes.length}));
     await connection.disconnect();
