@@ -1,7 +1,5 @@
+/**/.env
+/**/tmp/
 /ctx/
 /node_modules/
 /var/
-/.env
-/.env.*
-!/.env.example
-
