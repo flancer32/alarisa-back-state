@@ -14,7 +14,7 @@
         "recorded_at": {"type": {"id": "core.datetime", "params": {"precision": 3, "timezone": true}}, "default": {"kind": "function", "name": "core.currentTimestamp", "params": {}}}
       },
       "index": {
-        "id_unique": {"kind": "unique", "keys": [{"attr": "id"}], "include": [], "options": {}, "phase": "table"},
+        "id_unique": {"kind": "primary", "keys": [{"attr": "id"}], "include": [], "options": {}, "phase": "table"},
         "recorded_lookup": {"kind": "index", "method": "core.btree", "keys": [{"attr": "recorded_at"}], "include": [], "options": {}, "phase": "afterRelations"}
       },
       "relation": {}
@@ -30,7 +30,7 @@
         "ontology_version": {"type": {"id": "core.string", "params": {"length": 128}}}
       },
       "index": {
-        "id_unique": {"kind": "unique", "keys": [{"attr": "id"}], "include": [], "options": {}, "phase": "table"},
+        "id_unique": {"kind": "primary", "keys": [{"attr": "id"}], "include": [], "options": {}, "phase": "table"},
         "ontology_lookup": {"kind": "index", "method": "core.btree", "keys": [{"attr": "ontology_version"}], "include": [], "options": {}, "phase": "afterRelations"}
       },
       "relation": {}
@@ -65,7 +65,7 @@
         "superseded_by_id": {"nullable": true, "type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}}
       },
       "index": {
-        "id_unique": {"kind": "unique", "keys": [{"attr": "id"}], "include": [], "options": {}, "phase": "table"},
+        "id_unique": {"kind": "primary", "keys": [{"attr": "id"}], "include": [], "options": {}, "phase": "table"},
         "interpretation_lookup": {"kind": "index", "method": "core.btree", "keys": [{"attr": "interpretation_id"}], "include": [], "options": {}, "phase": "afterRelations"},
         "lifecycle_lookup": {"kind": "index", "method": "core.btree", "keys": [{"attr": "lifecycle_status"}], "include": [], "options": {}, "phase": "afterRelations"}
       },
@@ -81,7 +81,7 @@
         "created_at": {"type": {"id": "core.datetime", "params": {"precision": 3, "timezone": true}}, "default": {"kind": "function", "name": "core.currentTimestamp", "params": {}}},
         "archived_at": {"nullable": true, "type": {"id": "core.datetime", "params": {"precision": 3, "timezone": true}}}
       },
-      "index": {"id_unique": {"kind": "unique", "keys": [{"attr": "id"}], "include": [], "options": {}, "phase": "table"}},
+      "index": {"id_unique": {"kind": "primary", "keys": [{"attr": "id"}], "include": [], "options": {}, "phase": "table"}},
       "relation": {}
     },
     "relation_type": {
@@ -95,7 +95,7 @@
         "archived_at": {"nullable": true, "type": {"id": "core.datetime", "params": {"precision": 3, "timezone": true}}}
       },
       "index": {
-        "id_unique": {"kind": "unique", "keys": [{"attr": "id"}], "include": [], "options": {}, "phase": "table"},
+        "id_unique": {"kind": "primary", "keys": [{"attr": "id"}], "include": [], "options": {}, "phase": "table"},
         "code_unique": {"kind": "unique", "keys": [{"attr": "code"}], "include": [], "options": {}, "phase": "table"}
       },
       "relation": {
@@ -113,7 +113,7 @@
         "archived_at": {"nullable": true, "type": {"id": "core.datetime", "params": {"precision": 3, "timezone": true}}}
       },
       "index": {
-        "id_unique": {"kind": "unique", "keys": [{"attr": "id"}], "include": [], "options": {}, "phase": "table"},
+        "id_unique": {"kind": "primary", "keys": [{"attr": "id"}], "include": [], "options": {}, "phase": "table"},
         "semantic_unique": {"kind": "unique", "keys": [{"attr": "source_object_id"}, {"attr": "relation_type_id"}, {"attr": "target_object_id"}], "include": [], "options": {}, "phase": "table"},
         "target_lookup": {"kind": "index", "method": "core.btree", "keys": [{"attr": "target_object_id"}], "include": [], "options": {}, "phase": "afterRelations"}
       },

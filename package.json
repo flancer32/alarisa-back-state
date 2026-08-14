@@ -44,11 +44,13 @@
     "typecheck": "tsc -p jsconfig.json"
   },
   "dependencies": {
-    "@teqfw/db": "^2.1.1",
+    "@teqfw/db": "git+https://github.com/teqfw/db.git#main",
     "@teqfw/di": "^2.7.0"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",
+    "mysql2": "^3.23.3",
+    "pg": "^8.23.0",
     "sqlite3": "^6.0.1",
     "typescript": "^5.9.3"
   }
