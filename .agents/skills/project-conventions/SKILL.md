@@ -28,7 +28,10 @@ description: Project-specific conventions for @flancer32/alarisa-back-state. Use
 
 - `@flancer32/alarisa-back-state` is an ESM-only TeqFW npm package that owns distributed `@teqfw/db` DEM v2 fragments and durable Principal-state transitions; it is not the server-composition root.
 - Keep durable Principal-state declarations and enforced transitions here. Host database composition and lifecycle belong to `@flancer32/alarisa`; interpretation belongs to the Control Plane; communication contracts belong to `@flancer32/alarisa-comm`.
-- Keep JSON DEM and runtime schema metadata semantically aligned. Never import `@teqfw/db/src/**`; use caller-owned transactions for compound state changes.
+- Keep JSON DEM and runtime schema metadata semantically aligned. Never import
+  `@teqfw/db/src/**`. The host may provide transaction infrastructure, but
+  State owns the semantic atomic boundary and final durable outcome of compound
+  State changes.
 
 ## Validation
 
