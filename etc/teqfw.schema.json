@@ -4,232 +4,63 @@
   "package": {},
   "refs": {},
   "entity": {
-    "observation": {
-      "comment": "Append-oriented evidence received by Alarisa; evidence is not truth.",
-      "attr": {
-        "id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}, "generation": {"kind": "core.identity", "params": {"mode": "byDefault"}}},
-        "source": {"type": {"id": "core.string", "params": {"length": 128}}},
-        "payload": {"type": {"id": "core.json", "params": {}}},
-        "occurred_at": {"nullable": true, "type": {"id": "core.datetime", "params": {"precision": 3, "timezone": true}}},
-        "recorded_at": {"type": {"id": "core.datetime", "params": {"precision": 3, "timezone": true}}, "default": {"kind": "function", "name": "core.currentTimestamp", "params": {}}}
-      },
-      "index": {
-        "id_unique": {"kind": "primary", "keys": [{"attr": "id"}], "include": [], "options": {}, "phase": "table"},
-        "recorded_lookup": {"kind": "index", "method": "core.btree", "keys": [{"attr": "recorded_at"}], "include": [], "options": {}, "phase": "afterRelations"}
-      },
-      "relation": {}
-    },
-    "interpretation": {
-      "comment": "One traceable attempt to understand one or more Observations.",
-      "attr": {
-        "id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}, "generation": {"kind": "core.identity", "params": {"mode": "byDefault"}}},
-        "created_at": {"type": {"id": "core.datetime", "params": {"precision": 3, "timezone": true}}, "default": {"kind": "function", "name": "core.currentTimestamp", "params": {}}},
-        "interpreter_version": {"type": {"id": "core.string", "params": {"length": 128}}},
-        "model": {"nullable": true, "type": {"id": "core.string", "params": {"length": 255}}},
-        "prompt_version": {"nullable": true, "type": {"id": "core.string", "params": {"length": 128}}},
-        "ontology_version": {"type": {"id": "core.string", "params": {"length": 128}}}
-      },
-      "index": {
-        "id_unique": {"kind": "primary", "keys": [{"attr": "id"}], "include": [], "options": {}, "phase": "table"},
-        "ontology_lookup": {"kind": "index", "method": "core.btree", "keys": [{"attr": "ontology_version"}], "include": [], "options": {}, "phase": "afterRelations"}
-      },
-      "relation": {}
-    },
-    "interpretation_observation": {
-      "comment": "Structural many-to-many input link from an Interpretation to its Observations.",
-      "attr": {
-        "interpretation_id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}},
-        "observation_id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}}
-      },
-      "index": {
-        "pk": {"kind": "primary", "keys": [{"attr": "interpretation_id"}, {"attr": "observation_id"}], "include": [], "options": {}, "phase": "table"},
-        "observation_lookup": {"kind": "index", "method": "core.btree", "keys": [{"attr": "observation_id"}], "include": [], "options": {}, "phase": "afterRelations"}
-      },
-      "relation": {
-        "interpretation": {"attrs": ["interpretation_id"], "ref": {"path": "/interpretation", "attrs": ["id"]}, "action": {"delete": "restrict", "update": "cascade"}, "deferrable": "notDeferrable"},
-        "observation": {"attrs": ["observation_id"], "ref": {"path": "/observation", "attrs": ["id"]}, "action": {"delete": "restrict", "update": "cascade"}, "deferrable": "notDeferrable"}
-      }
-    },
-    "assertion": {
-      "comment": "A versioned semantic claim with typed provenance, time, epistemic and lifecycle metadata.",
-      "attr": {
-        "id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}, "generation": {"kind": "core.identity", "params": {"mode": "byDefault"}}},
-        "interpretation_id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}},
-        "claim_version": {"type": {"id": "core.integer", "params": {"bits": 16, "unsigned": false}}, "default": {"kind": "literal", "value": 1}},
-        "claim": {"type": {"id": "core.json", "params": {}}},
-        "asserted_at": {"type": {"id": "core.datetime", "params": {"precision": 3, "timezone": true}}, "default": {"kind": "function", "name": "core.currentTimestamp", "params": {}}},
-        "valid_from": {"nullable": true, "type": {"id": "core.datetime", "params": {"precision": 3, "timezone": true}}},
-        "valid_to": {"nullable": true, "type": {"id": "core.datetime", "params": {"precision": 3, "timezone": true}}},
-        "epistemic_status": {"type": {"id": "core.string", "params": {"length": 64}}},
-        "lifecycle_status": {"type": {"id": "core.string", "params": {"length": 32}}},
-        "superseded_by_id": {"nullable": true, "type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}}
-      },
-      "index": {
-        "id_unique": {"kind": "primary", "keys": [{"attr": "id"}], "include": [], "options": {}, "phase": "table"},
-        "interpretation_lookup": {"kind": "index", "method": "core.btree", "keys": [{"attr": "interpretation_id"}], "include": [], "options": {}, "phase": "afterRelations"},
-        "lifecycle_lookup": {"kind": "index", "method": "core.btree", "keys": [{"attr": "lifecycle_status"}], "include": [], "options": {}, "phase": "afterRelations"}
-      },
-      "relation": {
-        "interpretation": {"attrs": ["interpretation_id"], "ref": {"path": "/interpretation", "attrs": ["id"]}, "action": {"delete": "restrict", "update": "cascade"}, "deferrable": "notDeferrable"},
-        "superseded_by": {"attrs": ["superseded_by_id"], "ref": {"path": "/assertion", "attrs": ["id"]}, "action": {"delete": "restrict", "update": "cascade"}, "deferrable": "notDeferrable"}
-      }
-    },
     "object": {
-      "comment": "Stable semantic identity independent from current component classification.",
+      "comment": "Durable semantic identity in one delegated Assistant World Model.",
       "attr": {
         "id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}, "generation": {"kind": "core.identity", "params": {"mode": "byDefault"}}},
         "created_at": {"type": {"id": "core.datetime", "params": {"precision": 3, "timezone": true}}, "default": {"kind": "function", "name": "core.currentTimestamp", "params": {}}},
-        "archived_at": {"nullable": true, "type": {"id": "core.datetime", "params": {"precision": 3, "timezone": true}}}
+        "removed_at": {"nullable": true, "type": {"id": "core.datetime", "params": {"precision": 3, "timezone": true}}}
       },
-      "index": {"id_unique": {"kind": "primary", "keys": [{"attr": "id"}], "include": [], "options": {}, "phase": "table"}},
-      "relation": {}
+      "index": {"id_unique": {"kind": "primary", "keys": [{"attr": "id"}], "include": [], "options": {}, "phase": "table"}}, "relation": {}
+    },
+    "component_type": {
+      "comment": "Evolvable vocabulary for attachable semantic Components.",
+      "attr": {"id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}, "generation": {"kind": "core.identity", "params": {"mode": "byDefault"}}}, "code": {"type": {"id": "core.string", "params": {"length": 128}}}, "description": {"nullable": true, "type": {"id": "core.text", "params": {}}}},
+      "index": {"id_unique": {"kind": "primary", "keys": [{"attr": "id"}], "include": [], "options": {}, "phase": "table"}, "code_unique": {"kind": "unique", "keys": [{"attr": "code"}], "include": [], "options": {}, "phase": "table"}}, "relation": {}
+    },
+    "component": {
+      "comment": "An attachable semantic aspect of an Object.",
+      "attr": {"id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}, "generation": {"kind": "core.identity", "params": {"mode": "byDefault"}}}, "object_id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}}, "type_id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}}, "created_at": {"type": {"id": "core.datetime", "params": {"precision": 3, "timezone": true}}, "default": {"kind": "function", "name": "core.currentTimestamp", "params": {}}}, "removed_at": {"nullable": true, "type": {"id": "core.datetime", "params": {"precision": 3, "timezone": true}}}},
+      "index": {"id_unique": {"kind": "primary", "keys": [{"attr": "id"}], "include": [], "options": {}, "phase": "table"}, "object_type_unique": {"kind": "unique", "keys": [{"attr": "object_id"}, {"attr": "type_id"}], "include": [], "options": {}, "phase": "table"}},
+      "relation": {"object": {"attrs": ["object_id"], "ref": {"path": "/object", "attrs": ["id"]}, "action": {"delete": "restrict", "update": "cascade"}, "deferrable": "notDeferrable"}, "type": {"attrs": ["type_id"], "ref": {"path": "/component_type", "attrs": ["id"]}, "action": {"delete": "restrict", "update": "cascade"}, "deferrable": "notDeferrable"}}
+    },
+    "property_type": {
+      "comment": "Controlled meaning and value type for an open Property.",
+      "attr": {"id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}, "generation": {"kind": "core.identity", "params": {"mode": "byDefault"}}}, "code": {"type": {"id": "core.string", "params": {"length": 128}}}, "value_type": {"type": {"id": "core.string", "params": {"length": 64}}}, "description": {"nullable": true, "type": {"id": "core.text", "params": {}}}},
+      "index": {"id_unique": {"kind": "primary", "keys": [{"attr": "id"}], "include": [], "options": {}, "phase": "table"}, "code_unique": {"kind": "unique", "keys": [{"attr": "code"}], "include": [], "options": {}, "phase": "table"}}, "relation": {}
+    },
+    "property": {
+      "comment": "Typed semantic characteristic attached to a Component.",
+      "attr": {"id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}, "generation": {"kind": "core.identity", "params": {"mode": "byDefault"}}}, "component_id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}}, "type_id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}}, "value": {"type": {"id": "core.json", "params": {}}}, "created_at": {"type": {"id": "core.datetime", "params": {"precision": 3, "timezone": true}}, "default": {"kind": "function", "name": "core.currentTimestamp", "params": {}}}, "removed_at": {"nullable": true, "type": {"id": "core.datetime", "params": {"precision": 3, "timezone": true}}}},
+      "index": {"id_unique": {"kind": "primary", "keys": [{"attr": "id"}], "include": [], "options": {}, "phase": "table"}, "component_type_unique": {"kind": "unique", "keys": [{"attr": "component_id"}, {"attr": "type_id"}], "include": [], "options": {}, "phase": "table"}},
+      "relation": {"component": {"attrs": ["component_id"], "ref": {"path": "/component", "attrs": ["id"]}, "action": {"delete": "restrict", "update": "cascade"}, "deferrable": "notDeferrable"}, "type": {"attrs": ["type_id"], "ref": {"path": "/property_type", "attrs": ["id"]}, "action": {"delete": "restrict", "update": "cascade"}, "deferrable": "notDeferrable"}}
     },
     "relation_type": {
-      "comment": "Controlled and evolvable semantic predicate vocabulary.",
-      "attr": {
-        "id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}, "generation": {"kind": "core.identity", "params": {"mode": "byDefault"}}},
-        "code": {"type": {"id": "core.string", "params": {"length": 128}}},
-        "description": {"type": {"id": "core.text", "params": {}}},
-        "inverse_type_id": {"nullable": true, "type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}},
-        "constraints": {"nullable": true, "type": {"id": "core.json", "params": {}}},
-        "archived_at": {"nullable": true, "type": {"id": "core.datetime", "params": {"precision": 3, "timezone": true}}}
-      },
-      "index": {
-        "id_unique": {"kind": "primary", "keys": [{"attr": "id"}], "include": [], "options": {}, "phase": "table"},
-        "code_unique": {"kind": "unique", "keys": [{"attr": "code"}], "include": [], "options": {}, "phase": "table"}
-      },
-      "relation": {
-        "inverse": {"attrs": ["inverse_type_id"], "ref": {"path": "/relation_type", "attrs": ["id"]}, "action": {"delete": "restrict", "update": "cascade"}, "deferrable": "notDeferrable"}
-      }
+      "comment": "Controlled predicate vocabulary for first-class Relations.",
+      "attr": {"id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}, "generation": {"kind": "core.identity", "params": {"mode": "byDefault"}}}, "code": {"type": {"id": "core.string", "params": {"length": 128}}}, "description": {"nullable": true, "type": {"id": "core.text", "params": {}}}, "inverse_type_id": {"nullable": true, "type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}}},
+      "index": {"id_unique": {"kind": "primary", "keys": [{"attr": "id"}], "include": [], "options": {}, "phase": "table"}, "code_unique": {"kind": "unique", "keys": [{"attr": "code"}], "include": [], "options": {}, "phase": "table"}}, "relation": {"inverse": {"attrs": ["inverse_type_id"], "ref": {"path": "/relation_type", "attrs": ["id"]}, "action": {"delete": "restrict", "update": "cascade"}, "deferrable": "notDeferrable"}}
     },
     "relation": {
-      "comment": "First-class directed semantic relation in the current projection.",
-      "attr": {
-        "id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}, "generation": {"kind": "core.identity", "params": {"mode": "byDefault"}}},
-        "source_object_id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}},
-        "relation_type_id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}},
-        "target_object_id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}},
-        "created_at": {"type": {"id": "core.datetime", "params": {"precision": 3, "timezone": true}}, "default": {"kind": "function", "name": "core.currentTimestamp", "params": {}}},
-        "archived_at": {"nullable": true, "type": {"id": "core.datetime", "params": {"precision": 3, "timezone": true}}}
-      },
-      "index": {
-        "id_unique": {"kind": "primary", "keys": [{"attr": "id"}], "include": [], "options": {}, "phase": "table"},
-        "semantic_unique": {"kind": "unique", "keys": [{"attr": "source_object_id"}, {"attr": "relation_type_id"}, {"attr": "target_object_id"}], "include": [], "options": {}, "phase": "table"},
-        "target_lookup": {"kind": "index", "method": "core.btree", "keys": [{"attr": "target_object_id"}], "include": [], "options": {}, "phase": "afterRelations"}
-      },
-      "relation": {
-        "source": {"attrs": ["source_object_id"], "ref": {"path": "/object", "attrs": ["id"]}, "action": {"delete": "restrict", "update": "cascade"}, "deferrable": "notDeferrable"},
-        "type": {"attrs": ["relation_type_id"], "ref": {"path": "/relation_type", "attrs": ["id"]}, "action": {"delete": "restrict", "update": "cascade"}, "deferrable": "notDeferrable"},
-        "target": {"attrs": ["target_object_id"], "ref": {"path": "/object", "attrs": ["id"]}, "action": {"delete": "restrict", "update": "cascade"}, "deferrable": "notDeferrable"}
-      }
-    },
-    "case_data": {
-      "comment": "Current Case component attached to an Object.",
-      "attr": {
-        "object_id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}},
-        "code": {"type": {"id": "core.string", "params": {"length": 128}}},
-        "title": {"type": {"id": "core.string", "params": {"length": 255}}},
-        "description": {"nullable": true, "type": {"id": "core.text", "params": {}}}
-      },
-      "index": {
-        "pk": {"kind": "primary", "keys": [{"attr": "object_id"}], "include": [], "options": {}, "phase": "table"},
-        "code_unique": {"kind": "unique", "keys": [{"attr": "code"}], "include": [], "options": {}, "phase": "table"}
-      },
-      "relation": {
-        "object": {"attrs": ["object_id"], "ref": {"path": "/object", "attrs": ["id"]}, "action": {"delete": "restrict", "update": "cascade"}, "deferrable": "notDeferrable"}
-      }
-    },
-    "goal_data": {
-      "comment": "Current Goal component attached to an Object.",
-      "attr": {
-        "object_id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}},
-        "title": {"type": {"id": "core.string", "params": {"length": 255}}},
-        "description": {"nullable": true, "type": {"id": "core.text", "params": {}}},
-        "status": {"nullable": true, "type": {"id": "core.string", "params": {"length": 64}}}
-      },
-      "index": {"pk": {"kind": "primary", "keys": [{"attr": "object_id"}], "include": [], "options": {}, "phase": "table"}},
-      "relation": {"object": {"attrs": ["object_id"], "ref": {"path": "/object", "attrs": ["id"]}, "action": {"delete": "restrict", "update": "cascade"}, "deferrable": "notDeferrable"}}
-    },
-    "obligation_data": {
-      "comment": "Current Obligation component attached to an Object.",
-      "attr": {
-        "object_id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}},
-        "title": {"type": {"id": "core.string", "params": {"length": 255}}},
-        "description": {"nullable": true, "type": {"id": "core.text", "params": {}}},
-        "due_at": {"nullable": true, "type": {"id": "core.datetime", "params": {"precision": 3, "timezone": true}}},
-        "status": {"nullable": true, "type": {"id": "core.string", "params": {"length": 64}}}
-      },
-      "index": {"pk": {"kind": "primary", "keys": [{"attr": "object_id"}], "include": [], "options": {}, "phase": "table"}},
-      "relation": {"object": {"attrs": ["object_id"], "ref": {"path": "/object", "attrs": ["id"]}, "action": {"delete": "restrict", "update": "cascade"}, "deferrable": "notDeferrable"}}
-    },
-    "action_data": {
-      "comment": "Current Action component attached to an Object.",
-      "attr": {
-        "object_id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}},
-        "title": {"type": {"id": "core.string", "params": {"length": 255}}},
-        "description": {"nullable": true, "type": {"id": "core.text", "params": {}}},
-        "status": {"nullable": true, "type": {"id": "core.string", "params": {"length": 64}}}
-      },
-      "index": {"pk": {"kind": "primary", "keys": [{"attr": "object_id"}], "include": [], "options": {}, "phase": "table"}},
-      "relation": {"object": {"attrs": ["object_id"], "ref": {"path": "/object", "attrs": ["id"]}, "action": {"delete": "restrict", "update": "cascade"}, "deferrable": "notDeferrable"}}
-    },
-    "event_data": {
-      "comment": "Current Event component attached to an Object.",
-      "attr": {
-        "object_id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}},
-        "title": {"type": {"id": "core.string", "params": {"length": 255}}},
-        "description": {"nullable": true, "type": {"id": "core.text", "params": {}}},
-        "starts_at": {"nullable": true, "type": {"id": "core.datetime", "params": {"precision": 3, "timezone": true}}},
-        "ends_at": {"nullable": true, "type": {"id": "core.datetime", "params": {"precision": 3, "timezone": true}}}
-      },
-      "index": {"pk": {"kind": "primary", "keys": [{"attr": "object_id"}], "include": [], "options": {}, "phase": "table"}},
-      "relation": {"object": {"attrs": ["object_id"], "ref": {"path": "/object", "attrs": ["id"]}, "action": {"delete": "restrict", "update": "cascade"}, "deferrable": "notDeferrable"}}
-    },
-    "entity_data": {
-      "comment": "Current persistent-world Entity component attached to an Object.",
-      "attr": {
-        "object_id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}},
-        "name": {"type": {"id": "core.string", "params": {"length": 255}}},
-        "description": {"nullable": true, "type": {"id": "core.text", "params": {}}},
-        "entity_type": {"nullable": true, "type": {"id": "core.string", "params": {"length": 128}}}
-      },
-      "index": {"pk": {"kind": "primary", "keys": [{"attr": "object_id"}], "include": [], "options": {}, "phase": "table"}},
-      "relation": {"object": {"attrs": ["object_id"], "ref": {"path": "/object", "attrs": ["id"]}, "action": {"delete": "restrict", "update": "cascade"}, "deferrable": "notDeferrable"}}
+      "comment": "First-class directed semantic Relation between Objects.",
+      "attr": {"id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}, "generation": {"kind": "core.identity", "params": {"mode": "byDefault"}}}, "source_object_id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}}, "relation_type_id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}}, "target_object_id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}}, "created_at": {"type": {"id": "core.datetime", "params": {"precision": 3, "timezone": true}}, "default": {"kind": "function", "name": "core.currentTimestamp", "params": {}}}, "removed_at": {"nullable": true, "type": {"id": "core.datetime", "params": {"precision": 3, "timezone": true}}}},
+      "index": {"id_unique": {"kind": "primary", "keys": [{"attr": "id"}], "include": [], "options": {}, "phase": "table"}, "semantic_unique": {"kind": "unique", "keys": [{"attr": "source_object_id"}, {"attr": "relation_type_id"}, {"attr": "target_object_id"}], "include": [], "options": {}, "phase": "table"}},
+      "relation": {"source": {"attrs": ["source_object_id"], "ref": {"path": "/object", "attrs": ["id"]}, "action": {"delete": "restrict", "update": "cascade"}, "deferrable": "notDeferrable"}, "type": {"attrs": ["relation_type_id"], "ref": {"path": "/relation_type", "attrs": ["id"]}, "action": {"delete": "restrict", "update": "cascade"}, "deferrable": "notDeferrable"}, "target": {"attrs": ["target_object_id"], "ref": {"path": "/object", "attrs": ["id"]}, "action": {"delete": "restrict", "update": "cascade"}, "deferrable": "notDeferrable"}}
     },
     "object_extension": {
-      "comment": "Namespaced and versioned experimental semantic data attached to an Object.",
-      "attr": {
-        "object_id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}},
-        "namespace": {"type": {"id": "core.string", "params": {"length": 128}}},
-        "version": {"type": {"id": "core.integer", "params": {"bits": 32, "unsigned": false}}},
-        "data": {"type": {"id": "core.json", "params": {}}}
-      },
-      "index": {"pk": {"kind": "primary", "keys": [{"attr": "object_id"}, {"attr": "namespace"}, {"attr": "version"}], "include": [], "options": {}, "phase": "table"}},
-      "relation": {"object": {"attrs": ["object_id"], "ref": {"path": "/object", "attrs": ["id"]}, "action": {"delete": "restrict", "update": "cascade"}, "deferrable": "notDeferrable"}}
+      "comment": "Namespaced experimental semantic payload attached to an Object.",
+      "attr": {"object_id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}}, "namespace": {"type": {"id": "core.string", "params": {"length": 128}}}, "version": {"type": {"id": "core.integer", "params": {"bits": 32, "unsigned": false}}}, "data": {"type": {"id": "core.json", "params": {}}}},
+      "index": {"pk": {"kind": "primary", "keys": [{"attr": "object_id"}, {"attr": "namespace"}, {"attr": "version"}], "include": [], "options": {}, "phase": "table"}}, "relation": {"object": {"attrs": ["object_id"], "ref": {"path": "/object", "attrs": ["id"]}, "action": {"delete": "restrict", "update": "cascade"}, "deferrable": "notDeferrable"}}
     },
-    "assertion_object_support": {
-      "comment": "Many-to-many provenance support from Assertions to projected Objects.",
-      "attr": {
-        "assertion_id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}},
-        "object_id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}}
-      },
-      "index": {"pk": {"kind": "primary", "keys": [{"attr": "assertion_id"}, {"attr": "object_id"}], "include": [], "options": {}, "phase": "table"}},
-      "relation": {
-        "assertion": {"attrs": ["assertion_id"], "ref": {"path": "/assertion", "attrs": ["id"]}, "action": {"delete": "restrict", "update": "cascade"}, "deferrable": "notDeferrable"},
-        "object": {"attrs": ["object_id"], "ref": {"path": "/object", "attrs": ["id"]}, "action": {"delete": "restrict", "update": "cascade"}, "deferrable": "notDeferrable"}
-      }
+    "change_set": {
+      "comment": "Immutable externally identified State processing journal entry.",
+      "attr": {"identity": {"type": {"id": "core.string", "params": {"length": 255}}}, "status": {"type": {"id": "core.string", "params": {"length": 16}}}, "revision": {"nullable": true, "type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}}, "payload": {"type": {"id": "core.json", "params": {}}}, "result": {"nullable": true, "type": {"id": "core.json", "params": {}}}, "processed_at": {"type": {"id": "core.datetime", "params": {"precision": 3, "timezone": true}}, "default": {"kind": "function", "name": "core.currentTimestamp", "params": {}}}},
+      "index": {"identity_unique": {"kind": "primary", "keys": [{"attr": "identity"}], "include": [], "options": {}, "phase": "table"}, "revision_unique": {"kind": "unique", "keys": [{"attr": "revision"}], "include": [], "options": {}, "phase": "table"}}, "relation": {}
     },
-    "assertion_relation_support": {
-      "comment": "Many-to-many provenance support from Assertions to projected Relations.",
-      "attr": {
-        "assertion_id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}},
-        "relation_id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}}
-      },
-      "index": {"pk": {"kind": "primary", "keys": [{"attr": "assertion_id"}, {"attr": "relation_id"}], "include": [], "options": {}, "phase": "table"}},
-      "relation": {
-        "assertion": {"attrs": ["assertion_id"], "ref": {"path": "/assertion", "attrs": ["id"]}, "action": {"delete": "restrict", "update": "cascade"}, "deferrable": "notDeferrable"},
-        "relation": {"attrs": ["relation_id"], "ref": {"path": "/relation", "attrs": ["id"]}, "action": {"delete": "restrict", "update": "cascade"}, "deferrable": "notDeferrable"}
-      }
+    "change_set_mutation": {
+      "comment": "Ordered typed primitive Mutation retained with its ChangeSet.",
+      "attr": {"id": {"type": {"id": "core.integer", "params": {"bits": 64, "unsigned": false}}, "generation": {"kind": "core.identity", "params": {"mode": "byDefault"}}}, "change_set_identity": {"type": {"id": "core.string", "params": {"length": 255}}}, "ordinal": {"type": {"id": "core.integer", "params": {"bits": 32, "unsigned": false}}}, "operation": {"type": {"id": "core.string", "params": {"length": 32}}}, "payload": {"type": {"id": "core.json", "params": {}}}},
+      "index": {"id_unique": {"kind": "primary", "keys": [{"attr": "id"}], "include": [], "options": {}, "phase": "table"}, "order_unique": {"kind": "unique", "keys": [{"attr": "change_set_identity"}, {"attr": "ordinal"}], "include": [], "options": {}, "phase": "table"}},
+      "relation": {"change_set": {"attrs": ["change_set_identity"], "ref": {"path": "/change_set", "attrs": ["identity"]}, "action": {"delete": "restrict", "update": "cascade"}, "deferrable": "notDeferrable"}}
     }
   }
 }

@@ -18,8 +18,8 @@ Its DEM v2 fragment is `etc/teqfw.schema.json`. It describes package-owned seman
 2. Register package namespaces from package metadata before resolving components.
 3. Add the package DEM fragment to the host's complete database map and resolve cross-package references in that map.
 4. Select the Knex-compatible driver, database location, connection lifecycle, and schema-operation policy in the host.
-5. Resolve `Alarisa_Back_State_Case_Repository$` only after the host has provided `TeqFw_Db_Back_App_Crud$` and `TeqFw_Db_Back_RDb_Connect$`.
-6. Let the Control Plane validate accepted meaning and authority before invoking a state transition.
+5. Compile the DEM before schema work and let the selected dialect perform connection-specific preflight.
+6. Let the Control Plane validate accepted meaning and authority before submitting a ChangeSet; State owns the semantic transaction boundary and final durable outcome.
 
 Namespace registration, DEM compilation, connection lifecycle, and DI resolution are separate operations. Do not assume one performs another.
 

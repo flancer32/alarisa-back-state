@@ -1,28 +1,22 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import {describe, it} from 'node:test';
-import ObjectSchema from '../../src/Object/Schema.mjs';
-import CaseSchema from '../../src/Case/Schema.mjs';
-import RelationSchema from '../../src/Relation/Schema.mjs';
-import RelationTypeSchema from '../../src/Relation/Type/Schema.mjs';
 
-describe('semantic projection schema metadata', () => {
-    it('keeps Object identity separate from Case code and component data', () => {
-        const object = new ObjectSchema();
-        const component = new CaseSchema();
-        assert.equal(object.getId(), 'id');
-        assert.deepEqual(object.getPrimaryKey(), ['id']);
-        assert.equal(object.getLogicalTypes().id.params.bits, 64);
-        assert.equal(component.getId(), 'object_id');
-        assert.deepEqual(component.getPrimaryKey(), ['object_id']);
-        assert.equal(component.getLogicalTypes().code.params.length, 128);
-        assert.deepEqual(component.createDto({object_id: 3, code: 'business', title: 'Business', kind: 'case'}), {
-            object_id: 3, code: 'business', title: 'Business',
-        });
-    });
+const root = path.resolve(import.meta.dirname, '../..');
 
-    it('gives Relation and controlled Relation Type independent identities', () => {
-        assert.deepEqual(new RelationSchema().getPrimaryKey(), ['id']);
-        assert.deepEqual(new RelationTypeSchema().getPrimaryKey(), ['id']);
-        assert.equal(new RelationSchema().getLogicalTypes().relation_type_id.params.bits, 64);
+describe('State DEM declaration', () => {
+    it('describes the open World Model and ChangeSet journal', async () => {
+        const schema = JSON.parse(await fs.readFile(path.join(root, 'etc/teqfw.schema.json'), 'utf8'));
+        assert.equal(schema.version, 2);
+        assert.deepEqual(Object.keys(schema.entity).sort(), [
+            'change_set', 'change_set_mutation', 'component', 'component_type',
+            'object', 'object_extension', 'property', 'property_type', 'relation', 'relation_type',
+        ]);
+        assert.ok(schema.entity.component.relation.object);
+        assert.ok(schema.entity.property.relation.component);
+        assert.ok(schema.entity.relation.relation.source);
+        assert.equal(schema.entity.change_set.index.identity_unique.kind, 'primary');
+        assert.equal(schema.entity.change_set_mutation.index.order_unique.kind, 'unique');
     });
 });
