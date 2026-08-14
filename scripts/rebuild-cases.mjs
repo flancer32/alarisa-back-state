@@ -41,7 +41,10 @@ for (const name of ['PG', 'MARIADB']) {
         for (const code of relationCodes) relationTypeId.set(code, await insertOne('alarisa_relation_type', {code, description: code === 'case-parent' ? 'Primary Case Map placement.' : null}));
         for (const item of cases) byCode.get(item.id).objectId = await insertOne('alarisa_object', {});
         for (const item of cases) byCode.get(item.id).componentId = await insertOne('alarisa_component', {object_id: byCode.get(item.id).objectId, type_id: componentTypeId});
-        for (const item of cases) for (const key of ['code', 'title', 'description']) await insertOne('alarisa_property', {component_id: byCode.get(item.id).componentId, type_id: propertyTypeId.get(key), value: JSON.stringify(item[key] ?? null)});
+        for (const item of cases) for (const key of ['code', 'title', 'description']) {
+            const value = key === 'code' ? item.id : item[key] ?? null;
+            await insertOne('alarisa_property', {component_id: byCode.get(item.id).componentId, type_id: propertyTypeId.get(key), value: JSON.stringify(value)});
+        }
         for (const item of cases) {
             if (item.parent !== null) await insertOne('alarisa_relation', {source_object_id: byCode.get(item.id).objectId, relation_type_id: relationTypeId.get('case-parent'), target_object_id: byCode.get(item.parent).objectId});
             for (const link of item.links ?? []) await insertOne('alarisa_relation', {source_object_id: byCode.get(item.id).objectId, relation_type_id: relationTypeId.get(link.relation), target_object_id: byCode.get(link.case).objectId});
