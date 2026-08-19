@@ -9,9 +9,9 @@ Use this package-owned skill for code that directly consumes or changes the inst
 
 ## Current implementation status
 
-The current package publishes an additive TeqFW DEM v2 fragment and fixture tooling. It does not currently provide package-owned runtime State modules, a ChangeSet processing service, a Case repository, generic CRUD, or a public transition API. The `Alarisa_Back_State_` namespace mapping exists in package metadata, but there are no package components to resolve through it yet.
+The current package publishes an additive TeqFW DEM v2 fragment, fixture tooling, and a read-only current World Picture DI boundary. It does not provide ChangeSet processing, a Case repository, generic CRUD, or a public transition API.
 
-The current checks cover the DEM declaration, SQLite compilation and physical planning, TypeScript checking, and package contents. They do not prove ChangeSet processing, State invariants, idempotent result replay, concurrent serialization, historical reconstruction, or Assistant-scope isolation.
+The current checks cover the DEM declaration, SQLite compilation and physical planning, isolated current-Picture reads, TypeScript checking, and package contents. They do not prove ChangeSet processing, State invariants, idempotent result replay, concurrent serialization, historical reconstruction, or Assistant-scope isolation.
 
 The semantic and architectural rules below are the target State contract. Treat them as implementation constraints for future State services unless a sentence explicitly says that the current DEM or tests enforce them.
 
@@ -21,19 +21,20 @@ This skill also defines a portable application-data authoring contract. An agent
 
 Choose only the reference needed for the task:
 
-- [Integration](references/integration.md) — compose the currently published DEM fragment in a host; runtime State API integration is not available yet.
+- [Current Picture reads](references/read.md) — resolve the read-only facade and apply its transaction rules.
+- [Integration](references/integration.md) — compose the DEM fragment and runtime components in a host.
 - [State model](references/state-model.md) — use the target contract for Objects, Components, Properties, Cases, Relations, and ChangeSets, while distinguishing it from the current DEM.
 - [Data authoring](references/data-authoring.md) — describe a portable World Model fragment and compile it into a normalized ChangeSet draft.
 - [Testing and maintenance](references/testing.md) — modify the current DEM, declarations, tests, fixture, skill, or package distribution.
 
 ## Non-negotiable boundaries
 
-- Package metadata declares the `Alarisa_Back_State_` namespace, mapped to `./src` with `.mjs` files. Do not assume that this currently exposes package-owned runtime components.
+- Package metadata declares the `Alarisa_Back_State_` namespace, mapped to `./src` with `.mjs` files. It exposes the documented current-Picture reader, but no mutation or history API.
 - The package publishes an additive DEM v2 fragment at `etc/teqfw.schema.json`; the host owns the map, driver, connection lifecycle, and schema-operation authorization.
-- Resolve TeqFW components through `TeqFw_Db_` when working with the published DEM. Resolve package components through `Alarisa_Back_State_` only after such components exist in the installed version. Do not use `@teqfw/db/src/**` deep imports or create a separate container.
+- Resolve TeqFW components through `TeqFw_Db_` when working with the published DEM. Resolve the current-Picture facade through its documented `Alarisa_Back_State_Service_Read` token. Do not use `@teqfw/db/src/**` deep imports or create a separate container.
 - The target model treats `Object` identity as durable and independent of component classification. A Case is a Component on an Object; its `code` is an ordinary typed Property, not an identity substitute. The current DEM provides generic entities and does not seed a Case vocabulary.
 - Keep the Acceptance Contour boundary: this package does not own Observations, Interpretations, Assertions, or Reconciliation records.
-- The target Case Map is Relation-based. Primary-parent cardinality and acyclicity are State invariants; the current DEM and tests do not enforce them.
+- The target Case Map is Relation-based. The reader reports corrupt primary-parent cardinality and cycles, but the DEM alone does not enforce them.
 - The target State contract treats `ChangeSet` as an immutable, identity-idempotent journal entry with ordered primitive Mutations. The current DEM stores journal-shaped entities but no service enforces processing, final outcomes, or replay.
 - The current DEM has no explicit Assistant-scope identity or proven storage isolation. Do not claim cross-scope isolation from this package alone.
 - This skill is discovered independently from TeqFW runtime metadata. It does not add a namespace, export, postinstall action, or automatic host link.

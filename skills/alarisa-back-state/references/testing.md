@@ -14,16 +14,17 @@ npm run typecheck
 ## Current coverage
 
 - `test/unit/Schema.test.mjs` verifies the DEM version, ten declared entities, and selected foreign-key/index declarations.
-- `test/integration/DemSchemaSqlite.test.mjs` compiles the fragment through the SQLite adapter using an isolated temporary file and verifies the ten planned relational projections. It does not apply the schema, insert data, or exercise State transitions.
-- `npm run typecheck` checks the current declarations and compiler configuration. There are no package-owned State JavaScript modules to typecheck yet.
+- `test/integration/DemSchemaSqlite.test.mjs` compiles the fragment through the SQLite adapter using an isolated temporary file and verifies the ten planned relational projections.
+- `test/integration/Read.test.mjs` compiles the published DEM, seeds an isolated SQLite graph, and verifies DI read resolution, deterministic DTOs, projections, hierarchy errors, transaction ownership, and no-write behavior.
+- `npm run typecheck` checks declarations, runtime read modules, and compiler configuration.
 - `npm pack --dry-run` verifies that the published package contains `skills/alarisa-back-state/`.
 
 ## Change checks
 
-- Keep `etc/teqfw.schema.json` aligned with the conceptual model and package metadata. There is currently no separate package-owned runtime schema metadata or source-attached `__deps__` contract.
+- Keep `etc/teqfw.schema.json` aligned with the conceptual model and package metadata. The `src/Service/Read/` modules declare source-attached `__deps__`; keep their DTO and transaction contract aligned with [Current Picture reads](read.md).
 - Preserve the `Alarisa_Back_State_` namespace declaration in `package.json` unless a real package runtime module is introduced and the integration contract is updated with it.
 - Keep the DEM declaration and the conceptual model aligned: Object/Component/Property/Relation plus ChangeSet journal.
-- For current DEM changes, run the existing unit and SQLite compilation tests. The fixture script is not an automated integration test and is not part of `npm test`.
+- For current DEM changes, run the existing unit and SQLite compilation tests; for reader changes, run the isolated read suite and TeqFW ESM validator. The fixture script is not an automated integration test and is not part of `npm test`.
 - Run `npm run typecheck` after JavaScript, JSDoc, declarations, or compiler-config changes.
 - After changing this skill, inspect `npm pack --dry-run` to confirm the complete `skills/alarisa-back-state/` tree is included.
 
