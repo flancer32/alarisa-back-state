@@ -18,5 +18,13 @@ describe('State DEM declaration', () => {
         assert.ok(schema.entity.relation.relation.source);
         assert.equal(schema.entity.change_set.index.identity_unique.kind, 'primary');
         assert.equal(schema.entity.change_set_mutation.index.order_unique.kind, 'unique');
+
+        const identities = Object.values(schema.entity).filter((entity) => entity.attr?.id);
+        assert.equal(identities.length, 8);
+        for (const entity of identities) {
+            assert.deepEqual(entity.attr.id.type, {id: 'core.integer', params: {bits: 64, unsigned: false}});
+            assert.deepEqual(entity.attr.id.generation, {kind: 'core.identity', params: {mode: 'byDefault'}});
+            assert.equal(entity.index.id_unique.kind, 'unique');
+        }
     });
 });

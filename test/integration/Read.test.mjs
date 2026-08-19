@@ -97,8 +97,8 @@ before(async () => {
     });
     compile.assertResult({value: compilation});
     assert.equal(compilation.physical.tables.length, 10);
-    await createTables(connection.getKnex());
-    ids = await seed(connection.getKnex());
+    await createTables(connection.getClient());
+    ids = await seed(connection.getClient());
     read = await di.get('Alarisa_Back_State_Service_Read$');
 });
 
@@ -120,7 +120,7 @@ describe('current World Picture read contract', () => {
     });
 
     it('returns deterministic active graph DTOs without database rows or writes', async () => {
-        const knex = connection.getKnex();
+        const knex = connection.getClient();
         const beforeCounts = await Promise.all(['object', 'component', 'property', 'relation'].map(async (entity) => Number((await knex(`alarisa_${entity}`).count({count: 'id'}))[0].count)));
         const picture = await read.picture();
         const afterCounts = await Promise.all(['object', 'component', 'property', 'relation'].map(async (entity) => Number((await knex(`alarisa_${entity}`).count({count: 'id'}))[0].count)));
@@ -185,7 +185,7 @@ describe('current World Picture read contract', () => {
     });
 
     it('reports duplicate primary parents and cycles deterministically', async () => {
-        const knex = connection.getKnex();
+        const knex = connection.getClient();
         const duplicate = await insertOne(knex, 'alarisa_relation', {source_object_id: ids.grandchild, relation_type_id: ids.parentType, target_object_id: ids.root});
         await assert.rejects(async () => await read.tree(), {name: 'ReadHierarchyError'});
         await knex('alarisa_relation').where({id: duplicate}).delete();
