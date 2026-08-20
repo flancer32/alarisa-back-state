@@ -82,6 +82,31 @@ function assertNoDatabaseShape(value) {
     }
 }
 
+function postgresPictureTransaction(propertyRows) {
+    const rows = [
+        [{id: 1}],
+        [{id: 1, code: 'case', description: null}],
+        [{id: 1, object_id: 1, type_id: 1}],
+        [{id: 1, code: 'value', value_type: 'json', description: null}],
+        propertyRows,
+        [],
+        [],
+    ];
+    return {
+        createQuery() {
+            const query = {
+                select() { return query; },
+                from() { return query; },
+                whereNull() { return query; },
+                orderBy() { return Promise.resolve(rows.shift()); },
+            };
+            return query;
+        },
+        getTableName() { return 'alarisa_unused'; },
+        isPostgres() { return true; },
+    };
+}
+
 before(async () => {
     di = container();
     const compile = await di.get('TeqFw_Db_Back_Dem_Compile$');
@@ -134,6 +159,16 @@ describe('current World Picture read contract', () => {
         assert.equal(picture.propertyTypes.find((type) => type.code === 'rank').valueType, 'number');
         assert.deepEqual(picture.componentTypes.map((type) => type.id), [...picture.componentTypes.map((type) => type.id)].sort((left, right) => left - right));
         assertNoDatabaseShape(picture);
+    });
+
+    it('preserves PostgreSQL-decoded JSON Property values', async () => {
+        const {default: Picture} = await import('../../src/Service/Read/Picture.mjs');
+        const values = ['Principal', 42, true, ['case', 2], {status: 'active'}];
+        const picture = new Picture();
+        const result = await picture.read({trx: postgresPictureTransaction(values.map(function (value, index) {
+            return {id: index + 1, component_id: 1, type_id: 1, value};
+        }))});
+        assert.deepEqual(result.objects[0].components[0].properties.map(function (property) { return property.value; }), values);
     });
 
     it('builds the primary-parent Case tree and preserves cross-link references when focused', async () => {

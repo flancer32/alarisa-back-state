@@ -9,11 +9,12 @@ const ENTITY_NAMESPACE = 'alarisa';
 
 /**
  * @param {unknown} value
+ * @param {boolean} isPostgres
  * @returns {unknown}
  */
-function copyJson(value) {
+function copyJson(value, isPostgres) {
     if (value === undefined) return null;
-    if (typeof value === 'string') return JSON.parse(value);
+    if (!isPostgres && typeof value === 'string') return JSON.parse(value);
     return JSON.parse(JSON.stringify(value));
 }
 
@@ -56,6 +57,7 @@ export default class Picture {
         this.read = async function (input) {
             const {trx} = input;
             if (!trx || (typeof trx.createQuery !== 'function')) throw new TypeError('Picture.read requires an initialized transaction.');
+            const isPostgres = trx.isPostgres();
             const [objectRows, componentTypeRows, componentRows, propertyTypeRows, propertyRows, relationTypeRows, relationRows] = await Promise.all([
                 readRows(trx, 'object', ['id'], true),
                 readRows(trx, 'component_type', ['id', 'code', 'description'], false),
@@ -82,7 +84,7 @@ export default class Picture {
             for (const row of propertyRows) {
                 const component = componentById.get(Number(row.component_id));
                 if (!component) continue;
-                component.properties.push({id: Number(row.id), componentId: component.id, typeId: Number(row.type_id), value: copyJson(row.value)});
+                component.properties.push({id: Number(row.id), componentId: component.id, typeId: Number(row.type_id), value: copyJson(row.value, isPostgres)});
             }
             const relations = relationRows.map(function (row) {
                 return {id: Number(row.id), sourceObjectId: Number(row.source_object_id), typeId: Number(row.relation_type_id), targetObjectId: Number(row.target_object_id)};
