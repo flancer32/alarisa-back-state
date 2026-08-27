@@ -8,18 +8,20 @@ const root = path.resolve(import.meta.dirname, '../..');
 describe('State DEM declaration', () => {
     it('describes the open World Model and ChangeSet journal', async () => {
         const schema = JSON.parse(await fs.readFile(path.join(root, 'etc/teqfw.schema.json'), 'utf8'));
+        const state = schema.package.alarisa.package.state;
         assert.equal(schema.version, 2);
-        assert.deepEqual(Object.keys(schema.entity).sort(), [
+        assert.deepEqual(Object.keys(state.entity).sort(), [
             'change_set', 'change_set_mutation', 'component', 'component_type',
             'object', 'object_extension', 'property', 'property_type', 'relation', 'relation_type',
         ]);
-        assert.ok(schema.entity.component.relation.object);
-        assert.ok(schema.entity.property.relation.component);
-        assert.ok(schema.entity.relation.relation.source);
-        assert.equal(schema.entity.change_set.index.identity_unique.kind, 'primary');
-        assert.equal(schema.entity.change_set_mutation.index.order_unique.kind, 'unique');
+        assert.ok(state.entity.component.relation.object);
+        assert.ok(state.entity.property.relation.component);
+        assert.ok(state.entity.relation.relation.source);
+        assert.equal(state.entity.change_set.index.identity_unique.kind, 'primary');
+        assert.equal(state.entity.change_set_mutation.index.order_unique.kind, 'unique');
+        assert.equal(state.entity.component.relation.object.ref.path, '/alarisa/state/object');
 
-        const identities = Object.values(schema.entity).filter((entity) => entity.attr?.id);
+        const identities = Object.values(state.entity).filter((entity) => entity.attr?.id);
         assert.equal(identities.length, 8);
         for (const entity of identities) {
             assert.deepEqual(entity.attr.id.type, {id: 'core.integer', params: {bits: 64, unsigned: false}});

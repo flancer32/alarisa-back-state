@@ -26,12 +26,12 @@ before(async () => {
     connection = await di.get('TeqFw_Db_Back_RDb_Connect$');
     schema = await di.get('TeqFw_Db_Back_RDb_Schema$');
     await connection.init({client: 'sqlite3', connection: {filename: path.join(tempRoot, 'state.sqlite')}});
-    connection.setSchemaConfig({prefix: 'alarisa'});
+    connection.setSchemaConfig({prefix: ''});
     const declaration = JSON.parse(await fs.readFile(path.join(root, 'etc/teqfw.schema.json'), 'utf8'));
     compilation = await compile.exec({
         adapter,
         fragments: [{declaration, filename: path.join(root, 'etc/teqfw.schema.json'), fragmentId: '@flancer32/alarisa-back-state', packageName: '@flancer32/alarisa-back-state'}],
-        mapEnvelope: {declaration: {version: 2, namespace: 'alarisa', ref: {}, deprecated: {}}, filename: 'test://map', mapId: 'map', packageName: '@flancer32/alarisa'},
+        mapEnvelope: {declaration: {version: 2, namespace: '', ref: {}, deprecated: {}}, filename: 'test://map', mapId: 'map', packageName: '@flancer32/alarisa'},
     });
     compile.assertResult({value: compilation});
     assert.equal(compilation.physical.tables.length, 10);
@@ -46,9 +46,9 @@ after(async () => {
 describe('compiled State DEM', () => {
     it('creates the ten relational projections', async () => {
         assert.deepEqual(compilation.physical.tables.map((table) => table.name).sort(), [
-            'alarisa_change_set', 'alarisa_change_set_mutation', 'alarisa_component', 'alarisa_component_type',
-            'alarisa_object', 'alarisa_object_extension', 'alarisa_property', 'alarisa_property_type',
-            'alarisa_relation', 'alarisa_relation_type',
+            'alarisa_state_change_set', 'alarisa_state_change_set_mutation', 'alarisa_state_component', 'alarisa_state_component_type',
+            'alarisa_state_object', 'alarisa_state_object_extension', 'alarisa_state_property', 'alarisa_state_property_type',
+            'alarisa_state_relation', 'alarisa_state_relation_type',
         ]);
         const evidence = await schema.createAllTables({conn: connection});
         assert.equal(evidence.status, 'complete');

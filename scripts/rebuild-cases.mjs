@@ -22,10 +22,15 @@ for (const name of ['PG', 'MARIADB']) {
     await connection.init({client: env[`TEQFW_DB__${name}_CLIENT`], connection: {host: env[`TEQFW_DB__${name}_HOST`], user: env[`TEQFW_DB__${name}_USER`], password: env[`TEQFW_DB__${name}_PASSWORD`], database: env[`TEQFW_DB__${name}_DATABASE` ]}});
     const knex = connection.getClient();
     const current = ['change_set', 'change_set_mutation', 'component', 'component_type', 'object', 'object_extension', 'property', 'property_type', 'relation', 'relation_type'];
-    if (name === 'PG') for (const table of [...oldTables, ...current].map((table) => `alarisa_${table}`)) await knex.raw('DROP TABLE IF EXISTS ?? CASCADE', [table]);
-    else { await knex.raw('SET FOREIGN_KEY_CHECKS = 0'); for (const table of [...oldTables, ...current].map((item) => `alarisa_${item}`)) await knex.schema.dropTableIfExists(table); await knex.raw('SET FOREIGN_KEY_CHECKS = 1'); }
+    const tables = [...new Set([
+        ...oldTables.map((table) => `alarisa_${table}`),
+        ...current.map((table) => `alarisa_${table}`),
+        ...current.map((table) => `alarisa_state_${table}`),
+    ])];
+    if (name === 'PG') for (const table of tables) await knex.raw('DROP TABLE IF EXISTS ?? CASCADE', [table]);
+    else { await knex.raw('SET FOREIGN_KEY_CHECKS = 0'); for (const table of tables) await knex.schema.dropTableIfExists(table); await knex.raw('SET FOREIGN_KEY_CHECKS = 1'); }
     const adapter = connection.getDialectAdapter();
-    const compilation = await compile.exec({adapter, fragments: [{declaration, filename: path.join(root, 'etc/teqfw.schema.json'), fragmentId: '@flancer32/alarisa-back-state', packageName: '@flancer32/alarisa-back-state'}], mapEnvelope: {declaration: {version: 2, namespace: 'alarisa', ref: {}, deprecated: {}}, filename: 'test://map', mapId: 'map', packageName: '@flancer32/alarisa'}});
+    const compilation = await compile.exec({adapter, fragments: [{declaration, filename: path.join(root, 'etc/teqfw.schema.json'), fragmentId: '@flancer32/alarisa-back-state', packageName: '@flancer32/alarisa-back-state'}], mapEnvelope: {declaration: {version: 2, namespace: '', ref: {}, deprecated: {}}, filename: 'test://map', mapId: 'map', packageName: '@flancer32/alarisa'}});
     compile.assertResult({value: compilation});
     const schema = await builder.exec({adapter, connection, plan: planner.exec({compilation, operation: 'create'})});
     await knex.transaction(async (trx) => {
@@ -34,20 +39,20 @@ for (const name of ['PG', 'MARIADB']) {
             const inserted = name === 'PG' ? await query.returning('id') : await query;
             return name === 'PG' ? inserted[0].id : inserted[0];
         };
-        const componentTypeId = await insertOne('alarisa_component_type', {code: 'case', description: 'Central activity Component for one distinct matter.'});
+        const componentTypeId = await insertOne('alarisa_state_component_type', {code: 'case', description: 'Central activity Component for one distinct matter.'});
         const propertyTypeId = new Map();
-        for (const [code, value_type] of [['code', 'string'], ['title', 'string'], ['description', 'text']]) propertyTypeId.set(code, await insertOne('alarisa_property_type', {code, value_type}));
+        for (const [code, value_type] of [['code', 'string'], ['title', 'string'], ['description', 'text']]) propertyTypeId.set(code, await insertOne('alarisa_state_property_type', {code, value_type}));
         const relationTypeId = new Map();
-        for (const code of relationCodes) relationTypeId.set(code, await insertOne('alarisa_relation_type', {code, description: code === 'case-parent' ? 'Primary Case Map placement.' : null}));
-        for (const item of cases) byCode.get(item.id).objectId = await insertOne('alarisa_object', {});
-        for (const item of cases) byCode.get(item.id).componentId = await insertOne('alarisa_component', {object_id: byCode.get(item.id).objectId, type_id: componentTypeId});
+        for (const code of relationCodes) relationTypeId.set(code, await insertOne('alarisa_state_relation_type', {code, description: code === 'case-parent' ? 'Primary Case Map placement.' : null}));
+        for (const item of cases) byCode.get(item.id).objectId = await insertOne('alarisa_state_object', {});
+        for (const item of cases) byCode.get(item.id).componentId = await insertOne('alarisa_state_component', {object_id: byCode.get(item.id).objectId, type_id: componentTypeId});
         for (const item of cases) for (const key of ['code', 'title', 'description']) {
             const value = key === 'code' ? item.id : item[key] ?? null;
-            await insertOne('alarisa_property', {component_id: byCode.get(item.id).componentId, type_id: propertyTypeId.get(key), value: JSON.stringify(value)});
+            await insertOne('alarisa_state_property', {component_id: byCode.get(item.id).componentId, type_id: propertyTypeId.get(key), value: JSON.stringify(value)});
         }
         for (const item of cases) {
-            if (item.parent !== null) await insertOne('alarisa_relation', {source_object_id: byCode.get(item.id).objectId, relation_type_id: relationTypeId.get('case-parent'), target_object_id: byCode.get(item.parent).objectId});
-            for (const link of item.links ?? []) await insertOne('alarisa_relation', {source_object_id: byCode.get(item.id).objectId, relation_type_id: relationTypeId.get(link.relation), target_object_id: byCode.get(link.case).objectId});
+            if (item.parent !== null) await insertOne('alarisa_state_relation', {source_object_id: byCode.get(item.id).objectId, relation_type_id: relationTypeId.get('case-parent'), target_object_id: byCode.get(item.parent).objectId});
+            for (const link of item.links ?? []) await insertOne('alarisa_state_relation', {source_object_id: byCode.get(item.id).objectId, relation_type_id: relationTypeId.get(link.relation), target_object_id: byCode.get(link.case).objectId});
         }
     });
     console.log(JSON.stringify({database: name, schema: schema.status, cases: cases.length, relations: relationCodes.length}));

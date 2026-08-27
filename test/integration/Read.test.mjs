@@ -26,46 +26,46 @@ async function insertOne(knex, table, row) {
 }
 
 async function createTables(knex) {
-    await knex.schema.createTable('alarisa_object', (table) => { table.increments('id'); table.timestamp('created_at').nullable(); table.timestamp('removed_at').nullable(); });
-    await knex.schema.createTable('alarisa_component_type', (table) => { table.increments('id'); table.string('code'); table.text('description').nullable(); });
-    await knex.schema.createTable('alarisa_component', (table) => { table.increments('id'); table.integer('object_id'); table.integer('type_id'); table.timestamp('created_at').nullable(); table.timestamp('removed_at').nullable(); });
-    await knex.schema.createTable('alarisa_property_type', (table) => { table.increments('id'); table.string('code'); table.string('value_type'); table.text('description').nullable(); });
-    await knex.schema.createTable('alarisa_property', (table) => { table.increments('id'); table.integer('component_id'); table.integer('type_id'); table.text('value'); table.timestamp('created_at').nullable(); table.timestamp('removed_at').nullable(); });
-    await knex.schema.createTable('alarisa_relation_type', (table) => { table.increments('id'); table.string('code'); table.text('description').nullable(); table.integer('inverse_type_id').nullable(); });
-    await knex.schema.createTable('alarisa_relation', (table) => { table.increments('id'); table.integer('source_object_id'); table.integer('relation_type_id'); table.integer('target_object_id'); table.timestamp('created_at').nullable(); table.timestamp('removed_at').nullable(); });
-    await knex.schema.createTable('alarisa_object_extension', (table) => { table.integer('object_id'); table.string('namespace'); table.integer('version'); table.text('data'); });
-    await knex.schema.createTable('alarisa_change_set', (table) => { table.string('identity').primary(); table.string('status'); table.integer('revision').nullable(); table.text('payload'); table.text('result').nullable(); table.timestamp('processed_at').nullable(); });
-    await knex.schema.createTable('alarisa_change_set_mutation', (table) => { table.increments('id'); table.string('change_set_identity'); table.integer('ordinal'); table.string('operation'); table.text('payload'); });
+    await knex.schema.createTable('alarisa_state_object', (table) => { table.increments('id'); table.timestamp('created_at').nullable(); table.timestamp('removed_at').nullable(); });
+    await knex.schema.createTable('alarisa_state_component_type', (table) => { table.increments('id'); table.string('code'); table.text('description').nullable(); });
+    await knex.schema.createTable('alarisa_state_component', (table) => { table.increments('id'); table.integer('object_id'); table.integer('type_id'); table.timestamp('created_at').nullable(); table.timestamp('removed_at').nullable(); });
+    await knex.schema.createTable('alarisa_state_property_type', (table) => { table.increments('id'); table.string('code'); table.string('value_type'); table.text('description').nullable(); });
+    await knex.schema.createTable('alarisa_state_property', (table) => { table.increments('id'); table.integer('component_id'); table.integer('type_id'); table.text('value'); table.timestamp('created_at').nullable(); table.timestamp('removed_at').nullable(); });
+    await knex.schema.createTable('alarisa_state_relation_type', (table) => { table.increments('id'); table.string('code'); table.text('description').nullable(); table.integer('inverse_type_id').nullable(); });
+    await knex.schema.createTable('alarisa_state_relation', (table) => { table.increments('id'); table.integer('source_object_id'); table.integer('relation_type_id'); table.integer('target_object_id'); table.timestamp('created_at').nullable(); table.timestamp('removed_at').nullable(); });
+    await knex.schema.createTable('alarisa_state_object_extension', (table) => { table.integer('object_id'); table.string('namespace'); table.integer('version'); table.text('data'); });
+    await knex.schema.createTable('alarisa_state_change_set', (table) => { table.string('identity').primary(); table.string('status'); table.integer('revision').nullable(); table.text('payload'); table.text('result').nullable(); table.timestamp('processed_at').nullable(); });
+    await knex.schema.createTable('alarisa_state_change_set_mutation', (table) => { table.increments('id'); table.string('change_set_identity'); table.integer('ordinal'); table.string('operation'); table.text('payload'); });
 }
 
 async function seed(knex) {
-    const componentCase = await insertOne(knex, 'alarisa_component_type', {code: 'case', description: 'Case'});
-    const componentNote = await insertOne(knex, 'alarisa_component_type', {code: 'note', description: 'Note'});
-    const propertyTitle = await insertOne(knex, 'alarisa_property_type', {code: 'title', value_type: 'string', description: 'Title'});
-    const propertyRank = await insertOne(knex, 'alarisa_property_type', {code: 'rank', value_type: 'number', description: 'Rank'});
-    const parentType = await insertOne(knex, 'alarisa_relation_type', {code: 'case-parent', description: 'Primary placement'});
-    const blocksType = await insertOne(knex, 'alarisa_relation_type', {code: 'blocks', description: 'Cross-link'});
-    const root = await insertOne(knex, 'alarisa_object', {});
-    const child = await insertOne(knex, 'alarisa_object', {});
-    const grandchild = await insertOne(knex, 'alarisa_object', {});
-    const other = await insertOne(knex, 'alarisa_object', {});
-    await insertOne(knex, 'alarisa_object', {removed_at: '2026-01-01T00:00:00.000Z'});
-    const rootCase = await insertOne(knex, 'alarisa_component', {object_id: root, type_id: componentCase});
-    const childCase = await insertOne(knex, 'alarisa_component', {object_id: child, type_id: componentCase});
-    const grandchildCase = await insertOne(knex, 'alarisa_component', {object_id: grandchild, type_id: componentCase});
-    const otherCase = await insertOne(knex, 'alarisa_component', {object_id: other, type_id: componentCase});
-    const rootNote = await insertOne(knex, 'alarisa_component', {object_id: root, type_id: componentNote});
-    await insertOne(knex, 'alarisa_component', {object_id: child, type_id: componentNote, removed_at: '2026-01-01T00:00:00.000Z'});
+    const componentCase = await insertOne(knex, 'alarisa_state_component_type', {code: 'case', description: 'Case'});
+    const componentNote = await insertOne(knex, 'alarisa_state_component_type', {code: 'note', description: 'Note'});
+    const propertyTitle = await insertOne(knex, 'alarisa_state_property_type', {code: 'title', value_type: 'string', description: 'Title'});
+    const propertyRank = await insertOne(knex, 'alarisa_state_property_type', {code: 'rank', value_type: 'number', description: 'Rank'});
+    const parentType = await insertOne(knex, 'alarisa_state_relation_type', {code: 'case-parent', description: 'Primary placement'});
+    const blocksType = await insertOne(knex, 'alarisa_state_relation_type', {code: 'blocks', description: 'Cross-link'});
+    const root = await insertOne(knex, 'alarisa_state_object', {});
+    const child = await insertOne(knex, 'alarisa_state_object', {});
+    const grandchild = await insertOne(knex, 'alarisa_state_object', {});
+    const other = await insertOne(knex, 'alarisa_state_object', {});
+    await insertOne(knex, 'alarisa_state_object', {removed_at: '2026-01-01T00:00:00.000Z'});
+    const rootCase = await insertOne(knex, 'alarisa_state_component', {object_id: root, type_id: componentCase});
+    const childCase = await insertOne(knex, 'alarisa_state_component', {object_id: child, type_id: componentCase});
+    const grandchildCase = await insertOne(knex, 'alarisa_state_component', {object_id: grandchild, type_id: componentCase});
+    const otherCase = await insertOne(knex, 'alarisa_state_component', {object_id: other, type_id: componentCase});
+    const rootNote = await insertOne(knex, 'alarisa_state_component', {object_id: root, type_id: componentNote});
+    await insertOne(knex, 'alarisa_state_component', {object_id: child, type_id: componentNote, removed_at: '2026-01-01T00:00:00.000Z'});
     for (const [component, title, rank] of [[rootCase, 'Root', 1], [childCase, 'Child', 2], [grandchildCase, 'Grandchild', 3], [otherCase, 'Other', 4]]) {
-        await insertOne(knex, 'alarisa_property', {component_id: component, type_id: propertyTitle, value: JSON.stringify(title)});
-        await insertOne(knex, 'alarisa_property', {component_id: component, type_id: propertyRank, value: JSON.stringify(rank)});
+        await insertOne(knex, 'alarisa_state_property', {component_id: component, type_id: propertyTitle, value: JSON.stringify(title)});
+        await insertOne(knex, 'alarisa_state_property', {component_id: component, type_id: propertyRank, value: JSON.stringify(rank)});
     }
-    await insertOne(knex, 'alarisa_property', {component_id: rootNote, type_id: propertyTitle, value: JSON.stringify('Note')});
-    await insertOne(knex, 'alarisa_property', {component_id: childCase, type_id: propertyTitle, value: JSON.stringify('Removed'), removed_at: '2026-01-01T00:00:00.000Z'});
-    const childParent = await insertOne(knex, 'alarisa_relation', {source_object_id: child, relation_type_id: parentType, target_object_id: root});
-    const grandchildParent = await insertOne(knex, 'alarisa_relation', {source_object_id: grandchild, relation_type_id: parentType, target_object_id: child});
-    const blocks = await insertOne(knex, 'alarisa_relation', {source_object_id: child, relation_type_id: blocksType, target_object_id: other});
-    await insertOne(knex, 'alarisa_relation', {source_object_id: root, relation_type_id: blocksType, target_object_id: other, removed_at: '2026-01-01T00:00:00.000Z'});
+    await insertOne(knex, 'alarisa_state_property', {component_id: rootNote, type_id: propertyTitle, value: JSON.stringify('Note')});
+    await insertOne(knex, 'alarisa_state_property', {component_id: childCase, type_id: propertyTitle, value: JSON.stringify('Removed'), removed_at: '2026-01-01T00:00:00.000Z'});
+    const childParent = await insertOne(knex, 'alarisa_state_relation', {source_object_id: child, relation_type_id: parentType, target_object_id: root});
+    const grandchildParent = await insertOne(knex, 'alarisa_state_relation', {source_object_id: grandchild, relation_type_id: parentType, target_object_id: child});
+    const blocks = await insertOne(knex, 'alarisa_state_relation', {source_object_id: child, relation_type_id: blocksType, target_object_id: other});
+    await insertOne(knex, 'alarisa_state_relation', {source_object_id: root, relation_type_id: blocksType, target_object_id: other, removed_at: '2026-01-01T00:00:00.000Z'});
     return {root, child, grandchild, other, parentType, childParent, grandchildParent, blocks};
 }
 
@@ -102,7 +102,7 @@ function postgresPictureTransaction(propertyRows) {
             };
             return query;
         },
-        getTableName() { return 'alarisa_unused'; },
+        getTableName() { return 'alarisa_state_unused'; },
         isPostgres() { return true; },
     };
 }
@@ -113,12 +113,12 @@ before(async () => {
     const adapter = await di.get('TeqFw_Db_Back_RDb_Dialect_Sqlite$');
     connection = await di.get('TeqFw_Db_Back_RDb_Connect$');
     await connection.init({client: 'sqlite3', connection: {filename: path.join(tempRoot, 'state.sqlite')}});
-    connection.setSchemaConfig({prefix: 'alarisa'});
+    connection.setSchemaConfig({prefix: ''});
     const declaration = JSON.parse(await fs.readFile(path.join(root, 'etc/teqfw.schema.json'), 'utf8'));
     const compilation = await compile.exec({
         adapter,
         fragments: [{declaration, filename: path.join(root, 'etc/teqfw.schema.json'), fragmentId: '@flancer32/alarisa-back-state', packageName: '@flancer32/alarisa-back-state'}],
-        mapEnvelope: {declaration: {version: 2, namespace: 'alarisa', ref: {}, deprecated: {}}, filename: 'test://map', mapId: 'map', packageName: '@flancer32/alarisa'},
+        mapEnvelope: {declaration: {version: 2, namespace: '', ref: {}, deprecated: {}}, filename: 'test://map', mapId: 'map', packageName: '@flancer32/alarisa'},
     });
     compile.assertResult({value: compilation});
     assert.equal(compilation.physical.tables.length, 10);
@@ -146,9 +146,9 @@ describe('current World Picture read contract', () => {
 
     it('returns deterministic active graph DTOs without database rows or writes', async () => {
         const knex = connection.getClient();
-        const beforeCounts = await Promise.all(['object', 'component', 'property', 'relation'].map(async (entity) => Number((await knex(`alarisa_${entity}`).count({count: 'id'}))[0].count)));
+        const beforeCounts = await Promise.all(['object', 'component', 'property', 'relation'].map(async (entity) => Number((await knex(`alarisa_state_${entity}`).count({count: 'id'}))[0].count)));
         const picture = await read.picture();
-        const afterCounts = await Promise.all(['object', 'component', 'property', 'relation'].map(async (entity) => Number((await knex(`alarisa_${entity}`).count({count: 'id'}))[0].count)));
+        const afterCounts = await Promise.all(['object', 'component', 'property', 'relation'].map(async (entity) => Number((await knex(`alarisa_state_${entity}`).count({count: 'id'}))[0].count)));
         assert.deepEqual(afterCounts, beforeCounts);
         assert.equal(picture.version, 1);
         assert.deepEqual(picture.selection, {kind: 'picture'});
@@ -199,7 +199,7 @@ describe('current World Picture read contract', () => {
         try {
             const picture = await read.picture({trx});
             assert.equal(picture.objects.length, 4);
-            const rows = await trx.createQuery().select('id').from('alarisa_object').orderBy('id', 'asc');
+            const rows = await trx.createQuery().select('id').from('alarisa_state_object').orderBy('id', 'asc');
             assert.equal(rows.length, 5);
         } finally {
             await trx.rollback();
@@ -221,11 +221,11 @@ describe('current World Picture read contract', () => {
 
     it('reports duplicate primary parents and cycles deterministically', async () => {
         const knex = connection.getClient();
-        const duplicate = await insertOne(knex, 'alarisa_relation', {source_object_id: ids.grandchild, relation_type_id: ids.parentType, target_object_id: ids.root});
+        const duplicate = await insertOne(knex, 'alarisa_state_relation', {source_object_id: ids.grandchild, relation_type_id: ids.parentType, target_object_id: ids.root});
         await assert.rejects(async () => await read.tree(), {name: 'ReadHierarchyError'});
-        await knex('alarisa_relation').where({id: duplicate}).delete();
-        const cycle = await insertOne(knex, 'alarisa_relation', {source_object_id: ids.root, relation_type_id: ids.parentType, target_object_id: ids.grandchild});
+        await knex('alarisa_state_relation').where({id: duplicate}).delete();
+        const cycle = await insertOne(knex, 'alarisa_state_relation', {source_object_id: ids.root, relation_type_id: ids.parentType, target_object_id: ids.grandchild});
         await assert.rejects(async () => await read.tree(), {name: 'ReadHierarchyError'});
-        await knex('alarisa_relation').where({id: cycle}).delete();
+        await knex('alarisa_state_relation').where({id: cycle}).delete();
     });
 });

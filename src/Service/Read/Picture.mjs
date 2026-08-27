@@ -5,7 +5,7 @@
  * @description Reads the active current World Picture through a supplied transaction.
  */
 
-const ENTITY_NAMESPACE = 'alarisa';
+const ENTITY_NAMESPACE = '@flancer32/alarisa-back-state/alarisa/state';
 
 /**
  * @param {unknown} value
