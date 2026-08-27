@@ -9,19 +9,33 @@ describe('State DEM declaration', () => {
     it('describes the open World Model and ChangeSet journal', async () => {
         const schema = JSON.parse(await fs.readFile(path.join(root, 'etc/teqfw.schema.json'), 'utf8'));
         const state = schema.package.alarisa.package.state;
+        const entities = {
+            object: state.entity.object,
+            component: state.entity.component,
+            property: state.entity.property,
+            relation: state.entity.relation,
+            change_set: state.package.change.entity.set,
+            change_set_mutation: state.package.change.package.set.entity.mutation,
+            component_type: state.package.component.entity.type,
+            object_extension: state.package.object.entity.extension,
+            property_type: state.package.property.entity.type,
+            relation_type: state.package.relation.entity.type,
+        };
         assert.equal(schema.version, 2);
-        assert.deepEqual(Object.keys(state.entity).sort(), [
+        assert.deepEqual(Object.keys(entities).sort(), [
             'change_set', 'change_set_mutation', 'component', 'component_type',
             'object', 'object_extension', 'property', 'property_type', 'relation', 'relation_type',
         ]);
-        assert.ok(state.entity.component.relation.object);
-        assert.ok(state.entity.property.relation.component);
-        assert.ok(state.entity.relation.relation.source);
-        assert.equal(state.entity.change_set.index.identity_unique.kind, 'primary');
-        assert.equal(state.entity.change_set_mutation.index.order_unique.kind, 'unique');
-        assert.equal(state.entity.component.relation.object.ref.path, '/alarisa/state/object');
+        assert.ok(entities.component.relation.object);
+        assert.ok(entities.property.relation.component);
+        assert.ok(entities.relation.relation.source);
+        assert.equal(entities.change_set.index.identity_unique.kind, 'primary');
+        assert.equal(entities.change_set_mutation.index.order_unique.kind, 'unique');
+        assert.equal(entities.component.relation.object.ref.path, '/alarisa/state/object');
+        assert.equal(entities.component.relation.type.ref.path, '/alarisa/state/component/type');
+        assert.equal(entities.change_set_mutation.relation.change_set.ref.path, '/alarisa/state/change/set');
 
-        const identities = Object.values(state.entity).filter((entity) => entity.attr?.id);
+        const identities = Object.values(entities).filter((entity) => entity.attr?.id);
         assert.equal(identities.length, 8);
         for (const entity of identities) {
             assert.deepEqual(entity.attr.id.type, {id: 'core.integer', params: {bits: 64, unsigned: false}});
